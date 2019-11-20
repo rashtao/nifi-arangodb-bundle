@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mvn clean package
+
 docker network create arangodb --subnet 172.28.0.0/16
 
 docker run -d --name arangodb \
@@ -8,9 +10,11 @@ docker run -d --name arangodb \
   -v $(pwd)/server.pem:/server.pem docker.io/arangodb/arangodb:3.5.2 \
   arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529
 
-docker run --name nifi \
+docker run -d --name nifi \
   --network arangodb -p 8080:8080 -p 9999:9999 \
   -v $(pwd)/../nifi-arangodb-nar/target/nifi-arangodb-nar-1.0.1.nar:/opt/nifi/nifi-1.9.2/lib/nifi-arangodb-nar-1.0.1.nar \
   -v $(pwd)/example.truststore:/example.truststore \
   apache/nifi:1.9.2
 
+docker exec -it nifi mkdir /home/nifi/data
+docker logs -f nifi
